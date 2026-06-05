@@ -1,9 +1,15 @@
+const URL_SUPABASE = "https://uqezzhneqpbtczbfnywi.supabase.co"; // votre URL de projet
+const CLE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxZXp6aG5lcXBidGN6YmZueXdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NTk1NTAsImV4cCI6MjA5NjIzNTU1MH0.azvUSDsr88j03tiYuWdxhta2G_OYipQeM3P1X-0d_XY"; // votre clé anon (Project Settings → API)
+// On nomme la variable `db` (et pas `supabase`) : `supabase` est déjà pris
+// par la librairie (window.supabase), le réutiliser provoque une erreur.
+const db = window.supabase.createClient(URL_SUPABASE, CLE_ANON);
+
 const form = document.querySelector("#contact");
 const confirmation = document.querySelector("#confirmation");
 
-form.addEventListener("submit", (event) => {
+form.addEventListener("submit", async (event) => {
+  event.preventDefault(); // empêche le rechargement de la page
 
-  event.preventDefault(); 
   const nom = document.querySelector("#nom").value;
   const email = document.querySelector("#email").value;
   const message = document.querySelector("#message").value;
@@ -13,8 +19,15 @@ form.addEventListener("submit", (event) => {
     return;
   }
 
-  confirmation.textContent = `Merci ${nom}, ton message a bien été pris en compte.`;
-  form.reset();
+  const { error } = await db
+    .from("contacts")
+    .insert({ nom: nom, email: email, message: message });
 
-
+  if (error) {
+    confirmation.textContent = "Oups, l'envoi a échoué. Réessaie.";
+    console.error(error);
+  } else {
+    confirmation.textContent = `Merci ${nom}, ton message a bien été enregistré.`;
+    form.reset();
+  }
 });
